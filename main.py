@@ -43,7 +43,7 @@ class Net(nn.Module):
 
 
 class CleanVsBlurred:
-    CLEAN = 'cleans'
+    CLEAN = 'PET'
     BLURRED = 'blurred'
     LABELS = {BLURRED: 0, CLEAN: 1}
     training_data = []
@@ -139,7 +139,7 @@ class CleanVsBlurred:
 
                     acc, loss = self.fwd_pass(batch_X, batch_y, train=True)
 
-                    if i % 32 == 0:
+                    if i % 10 == 0:
                         val_acc, val_loss = self.test()
                         f.write(
                             f"{MODEL_NAME},{round(time.time(), 3)},{round(float(acc), 2)},{round(float(loss), 4)},"
@@ -149,3 +149,4 @@ class CleanVsBlurred:
 if __name__ == "__main__":
     clean_vs_blurred = CleanVsBlurred()
     clean_vs_blurred.train()
+    clean_vs_blurred.confusion_matrix()
