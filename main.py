@@ -88,8 +88,8 @@ class CleanVsBlurred:
         self.test_y = y[-val_size:]
 
     def make_training_data(self):
-        # mat_content = sio.loadmat('dataset.mat')
-        mat_content = h5py.File('data.mat', 'r')
+        mat_content = sio.loadmat('data.mat')
+        # mat_content = h5py.File('data.mat', 'r')
         print('Successfully Loaded:', mat_content.keys())
 
         for lbl in self.LABELS:
@@ -147,6 +147,6 @@ class CleanVsBlurred:
 
 
 if __name__ == "__main__":
-    clean_vs_blurred = CleanVsBlurred()
+    clean_vs_blurred = CleanVsBlurred(1)
     clean_vs_blurred.train()
     clean_vs_blurred.confusion_matrix()
