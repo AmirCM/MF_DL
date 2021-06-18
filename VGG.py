@@ -11,6 +11,7 @@ LABELS = {BLURRED: 0, CLEAN: 1}
 VGG16 = [64, 64, "M", 128, 128, "M", 256, 256, 256, "M", 512, 512, 512, "M", 512, 512, 512, "M"],
 torch.cuda.empty_cache()
 
+
 class VGG_net(nn.Module):
     def __init__(self, in_channels=3, num_classes=2):
         super(VGG_net, self).__init__()
@@ -119,7 +120,7 @@ print(num_clean, num_blur)
 correct = 0
 total = 0
 with torch.no_grad():
-    for i in tqdm(range(len(test_X))):
+    for i in tqdm(range(0, len(test_X), BATCH_SIZE)):
         batch_X = test_X[i:i + BATCH_SIZE].view(-1, 1, 256, 256).to(device)
         batch_y = test_y[i:i + BATCH_SIZE].to(device)
         batch_out = net(batch_X)
@@ -154,3 +155,6 @@ for i, j in zip(outputs, y):
 print('\tClean\tBlurred')
 print(f'Clean\t{correct_clean}\t{wrong_clean}')
 print(f'Blurred\t{wrong_blurred}\t{correct_blurred}')
+with open("confusion_matrix.log", "a") as f:
+    log_tag = f"VGG-{int(time.time())}"
+    f.write(f'{log_tag},{correct_clean},{wrong_clean},{correct_blurred},{wrong_blurred}')

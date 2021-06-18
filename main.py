@@ -10,6 +10,7 @@ from tqdm import tqdm
 import cv2 as cv
 import numpy as np
 
+torch.cuda.empty_cache()
 
 class Net(nn.Module):
     def __init__(self):
@@ -72,7 +73,9 @@ class CleanVsBlurred:
             self.training_data = np.load("Ltraining_data.npy", allow_pickle=True)
         else:
             self.training_data = np.load("training_data.npy", allow_pickle=True)
-
+        for img in self.training_data:
+            cv.imshow('test', img[0])
+            cv.waitKey(1)
         X = torch.Tensor([i[0] for i in self.training_data]).view(-1, 256, 256)
         X = X / 255.0
         y = torch.Tensor([i[1] for i in self.training_data])
@@ -98,8 +101,8 @@ class CleanVsBlurred:
             for i in tqdm(range(256)):
                 img = mat_content[lbl][:, :, i]
 
-                if sum(img.dot(ones_array)) > 0:
-                    self.training_data.append([img, np.eye(2)[self.LABELS[lbl]]])
+                #if sum(img.dot(ones_array)) > 0:
+                self.training_data.append([img, np.eye(2)[self.LABELS[lbl]]])
 
         print(len(self.training_data))
         np.random.shuffle(self.training_data)
@@ -147,6 +150,6 @@ class CleanVsBlurred:
 
 
 if __name__ == "__main__":
-    clean_vs_blurred = CleanVsBlurred(1)
+    clean_vs_blurred = CleanVsBlurred()
     clean_vs_blurred.train()
     clean_vs_blurred.confusion_matrix()
