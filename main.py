@@ -63,8 +63,6 @@ class CleanVsBlurred:
         device = torch.device("cpu")
         print('CPU')
 
-    net = Net().to(device)
-    optimizer = optim.Adam(net.parameters(), lr=0.001)
     loss_function = nn.MSELoss()
 
     def __init__(self, IS_Rebuild=0):
@@ -78,7 +76,6 @@ class CleanVsBlurred:
             cv.imshow('test', img[0])
             cv.waitKey(1)
         X = torch.Tensor([i[0] for i in self.training_data]).view(-1, 256, 256)
-        X = X / 255.0
         y = torch.Tensor([i[1] for i in self.training_data])
 
         VAL_PCT = 0.1
@@ -90,6 +87,8 @@ class CleanVsBlurred:
 
         self.test_X = X[-val_size:]
         self.test_y = y[-val_size:]
+        self.net = Net().to(self.device)
+        self.optimizer = optim.Adam(self.net.parameters(), lr=0.001)
 
     def make_training_data(self):
         mat_content = sio.loadmat('data.mat')
@@ -110,8 +109,6 @@ class CleanVsBlurred:
         np.save("training_data.npy", self.training_data)
 
     def fwd_pass(self, X, y, train=False):
-        if train:
-            self.net.zero_grad()
         outputs = self.net(X)
 
         matches = [torch.argmax(i) == torch.argmax(j) for i, j in zip(outputs, y)]
@@ -120,6 +117,7 @@ class CleanVsBlurred:
         loss = self.loss_function(outputs, y)
 
         if train:
+            self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
 
@@ -133,24 +131,31 @@ class CleanVsBlurred:
     def train(self):
         MODEL_NAME = f"model-{int(time.time())}"
         print(MODEL_NAME)
+        print(self.net)
         with open("model.log", "a") as f:
             for epoch in range(self.EPOCHS):
-                for i in tqdm(range(0, len(self.train_X), self.BATCH_SIZE)):
+                for i in range(0, len(self.train_X), self.BATCH_SIZE):
                     batch_X = self.train_X[i:i + self.BATCH_SIZE].view(-1, 1, 256, 256)
                     batch_y = self.train_y[i:i + self.BATCH_SIZE]
 
                     batch_X, batch_y = batch_X.to(self.device), batch_y.to(self.device)
 
-                    acc, loss = self.fwd_pass(batch_X, batch_y, train=True)
+                    outputs = self.net(batch_X)
 
-                    if i % 10 == 0:
-                        val_acc, val_loss = self.test()
-                        f.write(
-                            f"{MODEL_NAME},{round(time.time(), 3)},{round(float(acc), 2)},{round(float(loss), 4)},"
-                            f"{round(float(val_acc), 2)},{round(float(val_loss), 4)},{epoch}\n")
+                    loss = self.loss_function(outputs, batch_y)
+
+                    self.optimizer.zero_grad()
+                    loss.backward()
+                    self.optimizer.step()
+
+                val_acc, val_loss = self.test()
+                print(f'Test Acc :{val_acc},Test Loss: {val_loss}')
+        """f.write(
+            f"{MODEL_NAME},{round(time.time(), 3)},{round(float(acc), 2)},{round(float(loss), 4)},"
+            f"{round(float(val_acc), 2)},{round(float(val_loss), 4)},{epoch}\n")"""
 
 
 if __name__ == "__main__":
-    clean_vs_blurred = CleanVsBlurred(1)
-    # clean_vs_blurred.train()
-    # clean_vs_blurred.confusion_matrix()
+    clean_vs_blurred = CleanVsBlurred()
+    clean_vs_blurred.train()
+    clean_vs_blurred.confusion_matrix()

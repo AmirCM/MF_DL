@@ -189,7 +189,7 @@ def train():
     loss_function = nn.MSELoss()
 
     BATCH_SIZE = 8
-    EPOCHS = 5
+    EPOCHS = 1
 
     for epoch in range(EPOCHS):
         loss = 0
@@ -211,7 +211,7 @@ def train():
             with open("model.log", "a") as f:
                 matches = [torch.argmax(i) == torch.argmax(j) for i, j in zip(outputs, batch_y)]
                 acc = matches.count(True) / len(matches)
-                random_st = random.randint(0, 51 - BATCH_SIZE)
+                random_st = random.randint(0, 35 - BATCH_SIZE)
                 val_acc, val_loss = test(test_X[random_st:random_st+BATCH_SIZE], test_y[random_st:random_st+BATCH_SIZE], net, device)
                 f.write(
                     f"{MODEL_NAME},{round(time.time(), 3)},{round(float(acc), 2)},{round(float(loss), 4)},"
