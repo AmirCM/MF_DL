@@ -195,7 +195,6 @@ def test():
         print(f"Epoch: {epoch}. Loss: {loss}")
 
     with torch.no_grad():
-        overall_acc = 0
         correct_clean = 0
         wrong_clean = 0
         correct_blurred = 0
@@ -220,15 +219,17 @@ def test():
                     else:
                         wrong_clean += 1
             acc = matches.count(True) / len(matches)
-            overall_acc += acc / (len(test_X) // BATCH_SIZE)
-            print(f'Accuracy{k}: {round(acc, 3)}')
 
+            print(f'Batch Accuracy {i}: {round(acc, 3)}')
+
+    overall_acc = (correct_clean + correct_blurred) / (correct_clean + correct_blurred + wrong_clean + wrong_blurred)
     print(f'Overall accuracy: {round(overall_acc, 3)}')
     print('\tClean\tBlurred')
     print(f'Clean\t{correct_clean}\t{wrong_clean}')
     print(f'Blurred\t{wrong_blurred}\t{correct_blurred}')
     with open("confusion_matrix.log", "a") as f:
         log_tag = f"ResNet-{int(time.time())}"
+        print(f'File tag: {log_tag}')
         f.write(f'{log_tag},{correct_clean},{wrong_clean},{correct_blurred},{wrong_blurred}')
 
 
