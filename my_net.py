@@ -21,22 +21,17 @@ class Net(nn.Module):
 
         x = torch.randn(256, 256).view(-1, 1, 256, 256)
         self._to_linear = 115200
-        self.convs(x)
-
-        self.fc1 = nn.Linear(self._to_linear, 512)
-        self.fc2 = nn.Linear(512, 2)
-
-    def convs(self, x):
         x = F.max_pool2d(F.relu(self.conv1(x)), (2, 2))
         x = F.max_pool2d(F.relu(self.conv2(x)), (2, 2))
         x = F.max_pool2d(F.relu(self.conv3(x)), (2, 2))
 
-        if self._to_linear is None:
-            self._to_linear = x[0].shape[0] * x[0].shape[1] * x[0].shape[2]
-        return x
+        self.fc1 = nn.Linear(self._to_linear, 512)
+        self.fc2 = nn.Linear(512, 2)
 
     def forward(self, x):
-        x = self.convs(x)
+        x = F.max_pool2d(F.relu(self.conv1(x)), (2, 2))
+        x = F.max_pool2d(F.relu(self.conv2(x)), (2, 2))
+        x = F.max_pool2d(F.relu(self.conv3(x)), (2, 2))
         x = x.view(-1, self._to_linear)
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
@@ -59,7 +54,8 @@ def train():
     MODEL_NAME = f"model-{int(time.time())}"
     print(f'Model tag: {MODEL_NAME}')
     device = 'cuda:0'
-    net = Net().to("cuda:0")
+    net = Net().to(device)
+    print(net)
 
     training_data = np.load("training_data.npy", allow_pickle=True)
     X = torch.Tensor([i[0] for i in training_data]).view(-1, 256, 256)
@@ -108,7 +104,7 @@ def train():
                     f"{MODEL_NAME},{round(time.time(), 3)},{round(float(acc), 2)},{round(float(loss), 4)},"
                     f"{round(float(val_acc), 2)},{round(float(val_loss), 4)},{epoch}\n")
 
-        print(f"Epoch: {epoch}. Loss: {round(float(loss*100), 3)}")
+        print(f"Epoch: {epoch}. Loss: {round(float(loss * 100), 3)}")
 
     with torch.no_grad():
         correct_clean = 0
