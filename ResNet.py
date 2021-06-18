@@ -4,6 +4,7 @@ import numpy as np
 from tqdm import tqdm
 import time
 import torch.optim as optim
+import random
 
 CLEAN = 'PET'
 BLURRED = 'blurred'
@@ -151,7 +152,21 @@ def ResNet152(img_channel=3, num_classes=1000):
     return ResNet(block, [3, 8, 36, 3], img_channel, num_classes)
 
 
-def test():
+def test(batch_X, batch_y, net, device):
+    with torch.no_grad():
+        loss_function = nn.MSELoss()
+        batch_X = batch_X.view(-1, 1, 256, 256).to(device)
+        batch_y = batch_y.to(device)
+        batch_out = net(batch_X)
+        val_loss = loss_function(batch_out, batch_y)
+        matches = [torch.argmax(i) == torch.argmax(j) for i, j in zip(batch_out, batch_y)]
+        val_acc = matches.count(True) / len(matches)
+        return val_acc, val_loss
+
+
+def train():
+    MODEL_NAME = f"model-{int(time.time())}"
+    print(f'Model tag: {MODEL_NAME}')
     device = 'cuda:0'
     net = ResNet101(img_channel=1, num_classes=2).to("cuda:0")
 
@@ -174,7 +189,7 @@ def test():
     loss_function = nn.MSELoss()
 
     BATCH_SIZE = 8
-    EPOCHS = 1
+    EPOCHS = 5
 
     for epoch in range(EPOCHS):
         loss = 0
@@ -187,10 +202,20 @@ def test():
             outputs = net(batch_X)
 
             loss = loss_function(outputs, batch_y)
+
             optimizer.zero_grad()
             loss.backward()
 
             optimizer.step()  # Gradient Descent
+
+            with open("model.log", "a") as f:
+                matches = [torch.argmax(i) == torch.argmax(j) for i, j in zip(outputs, batch_y)]
+                acc = matches.count(True) / len(matches)
+                random_st = random.randint(0, 51 - BATCH_SIZE)
+                val_acc, val_loss = test(test_X[random_st:random_st+BATCH_SIZE], test_y[random_st:random_st+BATCH_SIZE], net, device)
+                f.write(
+                    f"{MODEL_NAME},{round(time.time(), 3)},{round(float(acc), 2)},{round(float(loss), 4)},"
+                    f"{round(float(val_acc), 2)},{round(float(val_loss), 4)},{epoch}\n")
 
         print(f"Epoch: {epoch}. Loss: {loss}")
 
@@ -233,5 +258,5 @@ def test():
         f.write(f'{log_tag},{correct_clean},{wrong_clean},{correct_blurred},{wrong_blurred}')
 
 
-test()
+train()
 torch.cuda.empty_cache()
