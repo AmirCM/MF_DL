@@ -108,7 +108,7 @@ def train():
                     f"{MODEL_NAME},{round(time.time(), 3)},{round(float(acc), 2)},{round(float(loss), 4)},"
                     f"{round(float(val_acc), 2)},{round(float(val_loss), 4)},{epoch}\n")
 
-        print(f"Epoch: {epoch}. Loss: {loss}")
+        print(f"Epoch: {epoch}. Loss: {round(float(loss*100), 3)}")
 
     with torch.no_grad():
         correct_clean = 0
